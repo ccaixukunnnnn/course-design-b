@@ -1,0 +1,106 @@
+{
+  "timestamp_utc": "20261103T161622Z",
+  "host": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "host_cpu": "13th Gen Intel(R) Core(TM) i9-13980HX",
+  "qemu": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+  "guest": "RISC-V virt, 1 hart, 1 GiB, TCG, no network",
+  "measurement": "guest CLOCK_MONOTONIC, 3000 warmup pairs then 7 x 20000 eventfd nonblocking write/read pairs per boot",
+  "baseline_kernel_sha256": "eb670701ceb4ca8041e01bdd268a702070720b0b401d31b4bae12fd57bcbd30e",
+  "modified_kernel_sha256": "61adf64301d99298d22a8e693b9d2f5d384a32266e74ea4ecd96fe134fa73ec2",
+  "test_sha256": "fca24823c71dc5533e6d309cf89c26ecc712e0c3fb4665754003be1a98fe74b5",
+  "runs": [
+    {
+      "order": 1,
+      "kernel": "base",
+      "elapsed_ns": [
+        194867500,
+        200439200,
+        199865500,
+        199765300,
+        203469100,
+        199222700,
+        203470000
+      ],
+      "median_ns_per_pair": 9993.275,
+      "log": "coursework/logs/three-perf-20261103T161622Z-1-base.log"
+    },
+    {
+      "order": 2,
+      "kernel": "new",
+      "elapsed_ns": [
+        102239200,
+        98278700,
+        102330900,
+        100226900,
+        98770100,
+        100780800,
+        100212700
+      ],
+      "median_ns_per_pair": 5011.345,
+      "log": "coursework/logs/three-perf-20261103T161622Z-2-new.log"
+    },
+    {
+      "order": 3,
+      "kernel": "new",
+      "elapsed_ns": [
+        102339600,
+        100911800,
+        105110500,
+        99367900,
+        101886400,
+        101900700,
+        101701400
+      ],
+      "median_ns_per_pair": 5094.32,
+      "log": "coursework/logs/three-perf-20261103T161622Z-3-new.log"
+    },
+    {
+      "order": 4,
+      "kernel": "base",
+      "elapsed_ns": [
+        200920000,
+        205826400,
+        211641000,
+        201654100,
+        199902800,
+        208341500,
+        205471800
+      ],
+      "median_ns_per_pair": 10273.59,
+      "log": "coursework/logs/three-perf-20261103T161622Z-4-base.log"
+    },
+    {
+      "order": 5,
+      "kernel": "base",
+      "elapsed_ns": [
+        206486500,
+        203507400,
+        198553400,
+        199706600,
+        212798500,
+        205207800,
+        211568500
+      ],
+      "median_ns_per_pair": 10260.39,
+      "log": "coursework/logs/three-perf-20261103T161622Z-5-base.log"
+    },
+    {
+      "order": 6,
+      "kernel": "new",
+      "elapsed_ns": [
+        97713300,
+        106476900,
+        105144300,
+        100568600,
+        100707200,
+        103757600,
+        103564600
+      ],
+      "median_ns_per_pair": 5178.23,
+      "log": "coursework/logs/three-perf-20261103T161622Z-6-new.log"
+    }
+  ],
+  "baseline_median_of_boot_medians_ns_per_pair": 10260.39,
+  "modified_median_of_boot_medians_ns_per_pair": 5094.32,
+  "time_reduction_percent": 50.34964557877429
+}

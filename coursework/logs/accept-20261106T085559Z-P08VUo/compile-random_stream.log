@@ -1,0 +1,1 @@
+command: rustc --edition 2024 --test coursework/tests/random_stream_harness.rs -o /tmp/starry-course-b-cache.fUCcraQe/project/.local/accept-bin-k3Q7soyy/random_stream 
