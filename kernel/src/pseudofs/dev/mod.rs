@@ -16,14 +16,10 @@ use core::any::Any;
 
 use axerrno::AxError;
 use axfs_ng_vfs::{DeviceId, Filesystem, NodeFlags, NodeType, VfsResult};
-use axsync::Mutex;
 #[cfg(feature = "dev-log")]
 pub use log::bind_dev_log;
-use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use crate::pseudofs::{Device, DeviceOps, DirMaker, DirMapping, SimpleDir, SimpleFs};
-
-const RANDOM_SEED: &[u8; 32] = b"0123456789abcdef0123456789abcdef";
 
 pub(crate) fn new_devfs() -> Filesystem {
     SimpleFs::new_with("devfs".into(), 0x01021994, builder)
@@ -70,26 +66,25 @@ impl DeviceOps for Zero {
     }
 }
 
-struct Random {
-    rng: Mutex<SmallRng>,
-}
-
-impl Random {
-    pub fn new() -> Self {
-        Self {
-            rng: Mutex::new(SmallRng::from_seed(*RANDOM_SEED)),
-        }
-    }
-}
+// No trustworthy entropy source is currently wired into this kernel. Never
+// return predictable bytes under the names /dev/random or /dev/urandom.
+struct Random;
 
 impl DeviceOps for Random {
     fn read_at(&self, buf: &mut [u8], _offset: u64) -> VfsResult<usize> {
-        self.rng.lock().fill_bytes(buf);
-        Ok(buf.len())
+        if buf.is_empty() {
+            Ok(0)
+        } else {
+            Err(AxError::Unsupported)
+        }
     }
 
     fn write_at(&self, buf: &[u8], _offset: u64) -> VfsResult<usize> {
-        Ok(buf.len())
+        if buf.is_empty() {
+            Ok(0)
+        } else {
+            Err(AxError::Unsupported)
+        }
     }
 
     fn as_any(&self) -> &dyn Any {
@@ -177,7 +172,7 @@ fn builder(fs: Arc<SimpleFs>) -> DirMaker {
             fs.clone(),
             NodeType::CharacterDevice,
             DeviceId::new(1, 8),
-            Arc::new(Random::new()),
+            Arc::new(Random),
         ),
     );
     root.add(
@@ -186,7 +181,7 @@ fn builder(fs: Arc<SimpleFs>) -> DirMaker {
             fs.clone(),
             NodeType::CharacterDevice,
             DeviceId::new(1, 9),
-            Arc::new(Random::new()),
+            Arc::new(Random),
         ),
     );
     root.add(

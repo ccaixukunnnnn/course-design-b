@@ -1,0 +1,27 @@
+PASS add ready fd
+PASS one result per registration per wait
+PASS modify queued registration
+PASS MOD preserves readiness with new data
+PASS arm oneshot while ready
+PASS oneshot first event
+PASS oneshot disabled after delivery
+PASS rearm oneshot
+PASS oneshot event after rearm
+PASS drain counter
+PASS switch to edge trigger
+PASS empty edge source
+PASS edge write
+PASS edge delivered
+PASS edge not repeated without write
+PASS drain edge source
+PASS second edge write
+PASS second edge delivered
+PASS delete registration
+PASS deleted source not delivered
+PASS bounded result buffer
+PASS bounded result buffer
+PASS bounded result buffer
+PASS round robin visits all ready sources
+PASS large result buffer has three distinct registrations
+PASS all ready data values preserved
+VERIFY: PASS

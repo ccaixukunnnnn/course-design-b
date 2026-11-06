@@ -1,0 +1,1 @@
+command: rustfmt --edition 2024 --check src/main.rs kernel/src/lib.rs coursework/tests/counter_harness.rs coursework/tests/event_poll_harness.rs coursework/tests/mincore_range_harness.rs coursework/tests/random_stream_harness.rs 

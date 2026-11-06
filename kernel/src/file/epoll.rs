@@ -21,7 +21,7 @@ use core::{
 use axerrno::{AxError, AxResult};
 use axpoll::{IoEvents, PollSet, Pollable};
 use bitflags::bitflags;
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use kspin::SpinNoPreempt;
 use linux_raw_sys::general::{EPOLLET, EPOLLONESHOT, epoll_event};
 
@@ -153,11 +153,6 @@ impl EpollInterest {
     #[inline]
     fn is_enabled(&self) -> bool {
         self.mode.lock().is_enabled()
-    }
-
-    #[inline]
-    fn is_in_queue(&self) -> bool {
-        self.in_ready_queue.load(Ordering::Acquire)
     }
 
     #[inline]
@@ -336,10 +331,8 @@ impl Epoll {
         let mut guard = self.inner.interests.lock();
         let old = guard.get_mut(&key).ok_or(AxError::NotFound)?;
 
-        // update new interest if old already in ready queue
-        if old.is_in_queue() {
-            interest.in_ready_queue.store(true, Ordering::Release);
-        }
+        // Queue entries refer to the old allocation. The replacement must
+        // enqueue itself after checking readiness, even if the old one queued.
         *old = Arc::clone(&interest);
         drop(guard);
         trace!(
@@ -365,7 +358,14 @@ impl Epoll {
     pub fn poll_events(&self, out: &mut [epoll_event]) -> AxResult<usize> {
         trace!("Epoll: poll_events called, out.len()={}", out.len());
         let mut count = 0;
-        loop {
+        let candidates = self.inner.ready_queue.lock().len();
+        let mut visited = HashSet::new();
+        // LT entries are requeued for the next wait. Bound this scan so they
+        // cannot fill the entire output repeatedly or starve other waiters.
+        for _ in 0..candidates {
+            if count >= out.len() {
+                break;
+            }
             let weak_interest = {
                 let mut queue = self.inner.ready_queue.lock();
                 queue.pop_front()
@@ -375,14 +375,16 @@ impl Epoll {
                 break;
             };
 
-            if count >= out.len() {
-                self.inner.ready_queue.lock().push_front(weak_interest);
-                break;
-            }
-
             let Some(interest) = weak_interest.upgrade() else {
                 continue; // interest already removed
             };
+
+            // Concurrent waiters can rotate the shared queue while we scan.
+            // A registration still must appear at most once in this result.
+            if visited.contains(&interest.key) {
+                self.inner.ready_queue.lock().push_back(weak_interest);
+                continue;
+            }
 
             let Some(file) = interest.key.get_file() else {
                 // file already closed remove interests
@@ -398,6 +400,7 @@ impl Epoll {
 
             match interest.consume(file.as_ref()) {
                 ConsumeResult::EventAndKeep(event) => {
+                    visited.insert(interest.key.clone());
                     out[count] = epoll_event {
                         events: event.events.bits(),
                         data: event.user_data,
@@ -409,6 +412,7 @@ impl Epoll {
                         .push_back(Arc::downgrade(&interest));
                 }
                 ConsumeResult::EventAndRemove(event) => {
+                    visited.insert(interest.key.clone());
                     out[count] = epoll_event {
                         events: event.events.bits(),
                         data: event.user_data,

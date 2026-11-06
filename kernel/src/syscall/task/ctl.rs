@@ -3,48 +3,22 @@ use core::ffi::c_char;
 use axerrno::{AxError, AxResult};
 use axtask::current;
 use linux_raw_sys::general::{__user_cap_data_struct, __user_cap_header_struct};
-use starry_vm::{VmMutPtr, VmPtr, vm_write_slice};
+use starry_vm::vm_write_slice;
 
-use crate::{
-    mm::vm_load_string,
-    task::{AsThread, get_process_data},
-};
-
-const CAPABILITY_VERSION_3: u32 = 0x20080522;
-
-fn validate_cap_header(header_ptr: *mut __user_cap_header_struct) -> AxResult<()> {
-    // FIXME: AnyBitPattern
-    let mut header = unsafe { header_ptr.vm_read_uninit()?.assume_init() };
-    if header.version != CAPABILITY_VERSION_3 {
-        header.version = CAPABILITY_VERSION_3;
-        header_ptr.vm_write(header)?;
-        return Err(AxError::InvalidInput);
-    }
-    let _ = get_process_data(header.pid as u32)?;
-    Ok(())
-}
+use crate::{mm::vm_load_string, task::AsThread};
 
 pub fn sys_capget(
-    header: *mut __user_cap_header_struct,
-    data: *mut __user_cap_data_struct,
+    _header: *mut __user_cap_header_struct,
+    _data: *mut __user_cap_data_struct,
 ) -> AxResult<isize> {
-    validate_cap_header(header)?;
-
-    data.vm_write(__user_cap_data_struct {
-        effective: u32::MAX,
-        permitted: u32::MAX,
-        inheritable: u32::MAX,
-    })?;
-    Ok(0)
+    Err(AxError::Unsupported)
 }
 
 pub fn sys_capset(
-    header: *mut __user_cap_header_struct,
+    _header: *mut __user_cap_header_struct,
     _data: *mut __user_cap_data_struct,
 ) -> AxResult<isize> {
-    validate_cap_header(header)?;
-
-    Ok(0)
+    Err(AxError::Unsupported)
 }
 
 pub fn sys_umask(mask: u32) -> AxResult<isize> {
@@ -53,16 +27,24 @@ pub fn sys_umask(mask: u32) -> AxResult<isize> {
     Ok(old as isize)
 }
 
-pub fn sys_setreuid(_ruid: u32, _euid: u32) -> AxResult<isize> {
-    Ok(0)
+fn unchanged_root(ids: &[u32]) -> AxResult<isize> {
+    if ids.iter().all(|&id| id == 0 || id == u32::MAX) {
+        Ok(0)
+    } else {
+        Err(AxError::Unsupported)
+    }
 }
 
-pub fn sys_setresuid(_ruid: u32, _euid: u32, _suid: u32) -> AxResult<isize> {
-    Ok(0)
+pub fn sys_setreuid(ruid: u32, euid: u32) -> AxResult<isize> {
+    unchanged_root(&[ruid, euid])
 }
 
-pub fn sys_setresgid(_rgid: u32, _egid: u32, _sgid: u32) -> AxResult<isize> {
-    Ok(0)
+pub fn sys_setresuid(ruid: u32, euid: u32, suid: u32) -> AxResult<isize> {
+    unchanged_root(&[ruid, euid, suid])
+}
+
+pub fn sys_setresgid(rgid: u32, egid: u32, sgid: u32) -> AxResult<isize> {
+    unchanged_root(&[rgid, egid, sgid])
 }
 
 pub fn sys_get_mempolicy(
@@ -107,7 +89,9 @@ pub fn sys_prctl(
             buf[..len].copy_from_slice(&name.as_bytes()[..len]);
             vm_write_slice(arg2 as _, &buf)?;
         }
-        PR_SET_SECCOMP => {}
+        // Seccomp is not implemented; accepting this request would create a
+        // dangerous false impression that the calling process is sandboxed.
+        PR_SET_SECCOMP => return Err(AxError::Unsupported),
         PR_MCE_KILL => {}
         PR_SET_MM => {
             // not implemented; but avoid annoying warnings

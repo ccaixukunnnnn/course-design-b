@@ -1,0 +1,35 @@
+name: Coursework regression
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-02-25
+          components: rustfmt
+      - name: Check formatting and kernel helper tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustfmt --edition 2024 --check src/main.rs kernel/src/lib.rs coursework/tests/*_harness.rs
+          mkdir -p /tmp/coursework-tests
+          for source in coursework/tests/*_harness.rs; do
+            name=$(basename "$source" _harness.rs)
+            rustc --edition 2024 --test "$source" -o "/tmp/coursework-tests/$name"
+            "/tmp/coursework-tests/$name"
+          done
+      - name: Linux reference tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in epoll_regression task_notifier eventfd_semantics task_queue event_stress; do
+            gcc -std=c11 -O2 -Wall -Wextra -Werror "coursework/tests/$suite.c" -o "/tmp/coursework-tests/$suite"
+            timeout 30 "/tmp/coursework-tests/$suite"
+          done

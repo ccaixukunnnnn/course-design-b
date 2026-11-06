@@ -1,0 +1,12 @@
+    Checking starry-kernel v0.2.0-preview.2 (/mnt/d/OS experiment/course-design-b/kernel)
+error: manual implementation of `.is_multiple_of()`
+ --> kernel/src/syscall/mm/mincore_range.rs:9:41
+  |
+9 |     if length == 0 || page_size == 0 || start % page_size != 0 || start < base {
+  |                                         ^^^^^^^^^^^^^^^^^^^^^^ help: replace with: `!start.is_multiple_of(page_size)`
+  |
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#manual_is_multiple_of
+  = note: `-D clippy::manual-is-multiple-of` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(clippy::manual_is_multiple_of)]`
+
+error: could not compile `starry-kernel` (lib) due to 1 previous error

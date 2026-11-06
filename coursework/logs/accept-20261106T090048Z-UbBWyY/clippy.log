@@ -1,0 +1,4 @@
+command: cargo clippy --workspace --locked --offline --target-dir /tmp/starry-course-b-cache.fUCcraQe/project/.local/target-short-baseline --target riscv64gc-unknown-none-elf --features qemu -- -D warnings -A unused 
+    Checking starry-kernel v0.2.0-preview.2 (/mnt/d/OS experiment/course-design-b/kernel)
+    Checking starryos v0.2.0-preview.2 (/mnt/d/OS experiment/course-design-b)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 18.14s

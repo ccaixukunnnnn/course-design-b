@@ -3,6 +3,7 @@ mod io_mpx;
 mod ipc;
 mod mm;
 mod net;
+mod random_stream;
 mod resources;
 mod signal;
 mod sync;
@@ -364,6 +365,7 @@ pub fn handle_syscall(uctx: &mut UserContext) {
         Sysno::getpid => sys_getpid(),
         Sysno::getppid => sys_getppid(),
         Sysno::gettid => sys_gettid(),
+        Sysno::getcpu => sys_getcpu(uctx.arg0() as _, uctx.arg1() as _),
         Sysno::getrusage => sys_getrusage(uctx.arg0() as _, uctx.arg1() as _),
 
         // task sched

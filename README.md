@@ -1,5 +1,7 @@
 # Starry OS
 
+> 课程设计方向 B 的复现命令、QEMU 对照证据和待完成的课程交付事项见 [coursework/README.md](coursework/README.md)。以下为上游说明。
+
 *An experimental monolithic OS based on ArceOS*
 
 [![GitHub Stars](https://img.shields.io/github/stars/Starry-OS/StarryOS?style=for-the-badge)](https://github.com/Starry-OS/StarryOS/stargazers)

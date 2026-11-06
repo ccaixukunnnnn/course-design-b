@@ -1,0 +1,171 @@
+{
+  "inputs_sha256": {
+    "/mnt/d/OS experiment/course-design-b/project_riscv64-qemu-virt.bin": "45ba89c69f08abe0c46105a9c7fd52d96ff1cb99eaac6b7da4f780f202ba4137",
+    "/mnt/d/OS experiment/course-design-b/coursework/logs/notify-perf-e1uh029q/notify-bench.bin": "e0e2fcae95084a23ca7b3b93e446d0c69b479726faef4ed9024e1d76574b9d6c",
+    "/mnt/d/OS experiment/course-design-b/rootfs-riscv64.img": "636840a4feda55e10f5d1dce394fd733d16ed626b97668239024d9ac2c5aaef6",
+    "/mnt/d/OS experiment/course-design-b/coursework/tests/notify_bench.c": "3c08a5b826dd663259d1bd4cf2d9b07e77bbf453cec22dd3264028cf1344d9e7",
+    "/mnt/d/OS experiment/course-design-b/coursework/scripts/notify-performance.py": "efb0f9266eb2917b0b8170bed20ccd37a75db1c5902c0e806c871151c25d6fbf",
+    "/mnt/d/OS experiment/course-design-b/coursework/scripts/qemu-three.py": "acab0d83e47b48ab4a73d35b9fa332cf563d78995680b9dddd04325dcffacfad"
+  },
+  "cpus": 1,
+  "warmup_per_case": 32,
+  "samples_per_case": 256,
+  "measurement": "parent request to child acknowledgement RTT",
+  "qemu": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)\nCopyright (c) 2003-2023 Fabrice Bellard and the QEMU Project developers\n",
+  "runs": [
+    {
+      "boot": 1,
+      "mode": "normal",
+      "batch": 1,
+      "median_ns": 127400.0,
+      "p95_ns": 229800,
+      "p99_ns": 388700,
+      "tasks_per_timed_second": 6992.75867061102,
+      "raw_log": "boot-1.log"
+    },
+    {
+      "boot": 1,
+      "mode": "normal",
+      "batch": 16,
+      "median_ns": 121000.0,
+      "p95_ns": 172800,
+      "p99_ns": 307500,
+      "tasks_per_timed_second": 121825.72021724,
+      "raw_log": "boot-1.log"
+    },
+    {
+      "boot": 1,
+      "mode": "semaphore",
+      "batch": 1,
+      "median_ns": 119650.0,
+      "p95_ns": 172500,
+      "p99_ns": 282800,
+      "tasks_per_timed_second": 7714.909967603406,
+      "raw_log": "boot-1.log"
+    },
+    {
+      "boot": 1,
+      "mode": "semaphore",
+      "batch": 16,
+      "median_ns": 196500.0,
+      "p95_ns": 391100,
+      "p99_ns": 608800,
+      "tasks_per_timed_second": 72337.45706288025,
+      "raw_log": "boot-1.log"
+    },
+    {
+      "boot": 2,
+      "mode": "normal",
+      "batch": 1,
+      "median_ns": 121100.0,
+      "p95_ns": 239900,
+      "p99_ns": 341600,
+      "tasks_per_timed_second": 6970.538583020204,
+      "raw_log": "boot-2.log"
+    },
+    {
+      "boot": 2,
+      "mode": "normal",
+      "batch": 16,
+      "median_ns": 161300.0,
+      "p95_ns": 378700,
+      "p99_ns": 564100,
+      "tasks_per_timed_second": 84787.68922496683,
+      "raw_log": "boot-2.log"
+    },
+    {
+      "boot": 2,
+      "mode": "semaphore",
+      "batch": 1,
+      "median_ns": 124050.0,
+      "p95_ns": 243500,
+      "p99_ns": 437500,
+      "tasks_per_timed_second": 6868.9980117470595,
+      "raw_log": "boot-2.log"
+    },
+    {
+      "boot": 2,
+      "mode": "semaphore",
+      "batch": 16,
+      "median_ns": 236400.0,
+      "p95_ns": 344200,
+      "p99_ns": 485800,
+      "tasks_per_timed_second": 63463.04315827801,
+      "raw_log": "boot-2.log"
+    },
+    {
+      "boot": 3,
+      "mode": "normal",
+      "batch": 1,
+      "median_ns": 151300.0,
+      "p95_ns": 238700,
+      "p99_ns": 365100,
+      "tasks_per_timed_second": 6088.2800608828,
+      "raw_log": "boot-3.log"
+    },
+    {
+      "boot": 3,
+      "mode": "normal",
+      "batch": 16,
+      "median_ns": 167650.0,
+      "p95_ns": 301100,
+      "p99_ns": 565500,
+      "tasks_per_timed_second": 84449.95165157797,
+      "raw_log": "boot-3.log"
+    },
+    {
+      "boot": 3,
+      "mode": "semaphore",
+      "batch": 1,
+      "median_ns": 154400.0,
+      "p95_ns": 233500,
+      "p99_ns": 383500,
+      "tasks_per_timed_second": 5969.8429651463775,
+      "raw_log": "boot-3.log"
+    },
+    {
+      "boot": 3,
+      "mode": "semaphore",
+      "batch": 16,
+      "median_ns": 298150.0,
+      "p95_ns": 554700,
+      "p99_ns": 733900,
+      "tasks_per_timed_second": 48828.17156617314,
+      "raw_log": "boot-3.log"
+    }
+  ],
+  "summary": [
+    {
+      "mode": "normal",
+      "batch": 1,
+      "median_ns": 127400.0,
+      "p95_ns": 238700,
+      "p99_ns": 365100,
+      "tasks_per_timed_second": 6970.538583020204
+    },
+    {
+      "mode": "normal",
+      "batch": 16,
+      "median_ns": 161300.0,
+      "p95_ns": 301100,
+      "p99_ns": 564100,
+      "tasks_per_timed_second": 84787.68922496683
+    },
+    {
+      "mode": "semaphore",
+      "batch": 1,
+      "median_ns": 124050.0,
+      "p95_ns": 233500,
+      "p99_ns": 383500,
+      "tasks_per_timed_second": 6868.9980117470595
+    },
+    {
+      "mode": "semaphore",
+      "batch": 16,
+      "median_ns": 236400.0,
+      "p95_ns": 391100,
+      "p99_ns": 608800,
+      "tasks_per_timed_second": 63463.04315827801
+    }
+  ]
+}

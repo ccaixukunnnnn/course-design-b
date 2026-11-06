@@ -1,0 +1,1 @@
+command: sha256sum --check --quiet /mnt/d/OS\ experiment/course-design-b/coursework/logs/accept-20261104T152916Z-8eDLZu/source.sha256 

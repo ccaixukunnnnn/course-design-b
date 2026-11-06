@@ -1,0 +1,1 @@
+command: riscv64-linux-musl-gcc -static -no-pie -std=c11 -O2 -Wall -Wextra -Werror coursework/tests/epoll_regression.c -o /tmp/starry-course-b-cache.fUCcraQe/project/.local/accept-bin-WBLa0z02/epoll_regression 
