@@ -10,7 +10,7 @@ use axtask::{AxTaskExt, spawn_task};
 use starry_process::{Pid, Process};
 
 use crate::{
-    file::FD_TABLE,
+    file::{FD_TABLE, timerfd::spawn_timerfd_task},
     mm::{copy_from_kernel, load_user_app, new_user_aspace_empty},
     pseudofs::{self, dev::tty::N_TTY},
     task::{ProcessData, Thread, add_task_to_table, new_user_task, spawn_alarm_task},
@@ -20,6 +20,7 @@ use crate::{
 pub fn init(args: &[String], envs: &[String]) {
     pseudofs::mount_all().expect("Failed to mount pseudofs");
     spawn_alarm_task();
+    spawn_timerfd_task();
 
     let loc = FS_CONTEXT
         .lock()

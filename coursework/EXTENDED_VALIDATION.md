@@ -87,11 +87,10 @@ python3 coursework/scripts/notify-performance.py
 
 ## 远端验收与并发重装
 
-课程工作流的 `riscv64-guest` 作业在 Ubuntu 24.04 的干净检出中安装 QEMU 8.2 系列、固定的 Rust nightly 和 Cargo 构建工具，并校验 musl 交叉工具链与解压后根镜像的 SHA-256。它用 `bash coursework/scripts/accept.sh --system` 重新构建内核，在单核 RISC-V QEMU 执行七组客体用例。GitHub Actions 的 `riscv64-coursework-acceptance` 制品包含步骤状态、工具版本、串口日志和输入校验清单。已准备工具的 Ubuntu 环境可以通过同一命令复现，需要将 QEMU、编译工具与 RISC-V musl 工具链放在 PATH 上，并在仓库根目录准备已验证的 `rootfs-riscv64.img`。原有 WSL 入口仍可直接运行 `bash coursework/scripts/accept.sh`。
+课程工作流的 `riscv64-guest` 作业在 Ubuntu 24.04 的干净检出中安装 QEMU 8.2 系列、固定的 Rust nightly 和 Cargo 构建工具，并校验 musl 交叉工具链与解压后根镜像的 SHA-256。它用 `bash coursework/scripts/accept.sh --system` 重新构建内核，在单核 RISC-V QEMU 执行客体验收。GitHub Actions 的 `riscv64-coursework-acceptance` 制品包含步骤状态、工具版本、串口日志和输入校验清单。已准备工具的 Ubuntu 环境可以通过同一命令复现，需要将 QEMU、编译工具与 RISC-V musl 工具链放在 PATH 上，并在仓库根目录准备已验证的 `rootfs-riscv64.img`。原有 WSL 入口仍可直接运行 `bash coursework/scripts/accept.sh`。新增定时器与任务队列用例见 [任务超时重派](DEADLINE_QUEUE.md)。
 
 `epoll_concurrent.c` 用两个进程共享一个 epoll 实例。等待者确认 ONESHOT 尚未重装时无事件，再用管道告知修改者可以运行 MOD。64 轮分别交替覆盖计数器已可读和重装后才写入的情况，检查新标记、单次交付、重装前的禁用状态及令牌数量。握手固定了用户态检查点的先后，两个系统调用进入内核的顺序由调度决定。该用例同时纳入 Linux 对照、单核验收和匹配内核配置的 2/4 核验证。
 
 ## 发布与个人工作
 
 用户已选择发布到个人 GitHub，连接账号为 ccaixukunnnnn。用户已创建并授权公开仓库 [course-design-b](https://github.com/ccaixukunnnnn/course-design-b)，用于提交课程源码和建立 PR。姓名、成员分工、真实评审及个人反思仍由本人提供。
-

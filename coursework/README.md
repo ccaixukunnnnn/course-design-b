@@ -4,6 +4,8 @@
 
 ## 状态与复现
 
+新增的 `timerfd` 与带超时任务重派演示见 [任务超时重派](DEADLINE_QUEUE.md)。运行 `bash coursework/scripts/demo.sh deadline_queue` 可观察任务 42 重派与迟到结果丢弃。
+
 多生产者任务、通知往返性能、独立重建和 2/4 核验证的命令与证据见 [扩展验证](EXTENDED_VALIDATION.md)。使用 `bash coursework/scripts/demo.sh task_queue` 演示四生产者任务处理。
 
 2026-11-06 对讲义书内第 141–145 页的核对、epoll 新修复及提分路线见 [要求核对与改进记录](REQUIREMENTS_REVIEW.md)。

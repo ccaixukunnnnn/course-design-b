@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for suite in epoll_regression epoll_concurrent task_notifier eventfd_semantics task_queue event_stress; do
+          for suite in epoll_regression epoll_concurrent task_notifier eventfd_semantics task_queue event_stress timerfd_regression deadline_queue; do
             gcc -std=c11 -O2 -Wall -Wextra -Werror "coursework/tests/$suite.c" -o "/tmp/coursework-tests/$suite"
             timeout 30 "/tmp/coursework-tests/$suite"
           done
@@ -80,4 +80,3 @@ jobs:
         with:
           name: riscv64-coursework-acceptance
           path: ${{ runner.temp }}/coursework-evidence
-
