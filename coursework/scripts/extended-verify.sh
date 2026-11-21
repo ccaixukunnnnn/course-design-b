@@ -21,7 +21,7 @@ evidence=$(mktemp -d "$root/coursework/logs/extended-${cpus}cpu-XXXXXXXX")
 trap 'rc=$?; echo "$rc" > "$evidence/exit-code"' EXIT
 printf 'Extended verification %s\n' "$evidence"
 inputs=("$kernel" rootfs-riscv64.img coursework/scripts/qemu-three.py coursework/scripts/extended-verify.sh)
-suites=(task_queue event_stress epoll_regression epoll_concurrent timerfd_regression deadline_queue)
+suites=(task_queue event_stress epoll_regression epoll_concurrent timerfd_regression deadline_queue timerfd_periodic worker_recovery)
 for suite in "${suites[@]}"; do
     .local/riscv64-linux-musl-cross/bin/riscv64-linux-musl-gcc -static -no-pie -std=c11 -O2 -Wall -Wextra -Werror "coursework/tests/$suite.c" -o "$evidence/$suite.bin"
     inputs+=("coursework/tests/$suite.c" "$evidence/$suite.bin")

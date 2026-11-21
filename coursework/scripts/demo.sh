@@ -6,8 +6,8 @@ cd "$root"
 mkdir -p .local/demo
 suite=${1:-task_notifier}
 case "$suite" in
-    task_notifier|task_queue|deadline_queue) ;;
-    *) echo 'Usage: demo.sh [task_notifier|task_queue|deadline_queue]' >&2; exit 2 ;;
+    task_notifier|task_queue|deadline_queue|timerfd_periodic|worker_recovery) ;;
+    *) echo 'Usage: demo.sh [task_notifier|task_queue|deadline_queue|timerfd_periodic|worker_recovery]' >&2; exit 2 ;;
 esac
 cc=.local/riscv64-linux-musl-cross/bin/riscv64-linux-musl-gcc
 "$cc" -static -no-pie -std=c11 -O2 -Wall -Wextra -Werror "coursework/tests/$suite.c" -o ".local/demo/$suite"

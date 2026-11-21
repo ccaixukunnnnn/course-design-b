@@ -27,28 +27,63 @@ static TIMERS: SpinNoPreempt<BTreeMap<TimerKey, Weak<TimerFd>>> =
     SpinNoPreempt::new(BTreeMap::new());
 static SCHEDULE_CHANGED: Event = Event::new();
 
+#[derive(Default)]
+struct TimerState {
+    // Earliest expiration that has not been read yet.
+    deadline: Option<Duration>,
+    interval: Duration,
+}
+
+impl TimerState {
+    fn remaining(&self, now: Duration) -> Duration {
+        match self.deadline {
+            Some(deadline) if deadline <= now && !self.interval.is_zero() => {
+                periodic_progress(now - deadline, self.interval).1
+            }
+            Some(deadline) => deadline.saturating_sub(now),
+            None => Duration::ZERO,
+        }
+    }
+}
+
+fn periodic_progress(elapsed: Duration, interval: Duration) -> (u64, Duration) {
+    let period = interval.as_nanos();
+    let elapsed = elapsed.as_nanos();
+    let expirations = u64::try_from(1 + elapsed / period).unwrap_or(u64::MAX);
+    let until_next = period - elapsed % period;
+    let seconds = until_next / 1_000_000_000;
+    let nanos = until_next % 1_000_000_000;
+    (expirations, Duration::new(seconds as u64, nanos as u32))
+}
+
 pub struct TimerFd {
-    // An expired deadline remains readable until it is consumed or reset.
-    deadline: SpinNoPreempt<Option<Duration>>,
+    state: SpinNoPreempt<TimerState>,
+    weak_self: Weak<Self>,
     nonblocking: AtomicBool,
     readable: PollSet,
 }
 
 impl TimerFd {
-    pub fn new(nonblocking: bool) -> Self {
-        Self {
-            deadline: SpinNoPreempt::new(None),
+    pub fn new(nonblocking: bool) -> Arc<Self> {
+        Arc::new_cyclic(|weak| Self {
+            state: SpinNoPreempt::new(TimerState::default()),
+            weak_self: weak.clone(),
             nonblocking: AtomicBool::new(nonblocking),
             readable: PollSet::new(),
-        }
+        })
     }
 
     fn key(&self, deadline: Duration) -> TimerKey {
         (deadline, self as *const Self as usize)
     }
 
-    pub fn settime(self: &Arc<Self>, value: Duration, absolute: bool) -> AxResult<Duration> {
-        let mut current = self.deadline.lock();
+    pub fn settime(
+        &self,
+        value: Duration,
+        interval: Duration,
+        absolute: bool,
+    ) -> AxResult<(Duration, Duration)> {
+        let mut current = self.state.lock();
         let now = monotonic_time();
         let deadline = if value.is_zero() {
             None
@@ -58,39 +93,38 @@ impl TimerFd {
             Some(now.checked_add(value).ok_or(AxError::InvalidInput)?)
         };
         let mut timers = TIMERS.lock();
-        if let Some(old) = *current {
+        if let Some(old) = current.deadline {
             timers.remove(&self.key(old));
         }
         if let Some(next) = deadline.filter(|deadline| *deadline > now) {
-            timers.insert(self.key(next), Arc::downgrade(self));
+            timers.insert(self.key(next), self.weak_self.clone());
         }
-        let previous = core::mem::replace(&mut *current, deadline);
+        let previous = core::mem::replace(&mut *current, TimerState { deadline, interval });
         drop(timers);
         drop(current);
         if deadline.is_some_and(|deadline| deadline <= now) {
             self.readable.wake();
         }
         SCHEDULE_CHANGED.notify(1);
-        Ok(previous.unwrap_or_default().saturating_sub(now))
+        Ok((previous.remaining(now), previous.interval))
     }
 
-    pub fn remaining(&self) -> Duration {
-        self.deadline
-            .lock()
-            .unwrap_or_default()
-            .saturating_sub(monotonic_time())
+    pub fn gettime(&self) -> (Duration, Duration) {
+        let current = self.state.lock();
+        (current.remaining(monotonic_time()), current.interval)
     }
 
     fn expired(&self) -> bool {
-        self.deadline
+        self.state
             .lock()
+            .deadline
             .is_some_and(|deadline| deadline <= monotonic_time())
     }
 }
 
 impl Drop for TimerFd {
     fn drop(&mut self) {
-        if let Some(deadline) = *self.deadline.get_mut() {
+        if let Some(deadline) = self.state.get_mut().deadline {
             TIMERS.lock().remove(&self.key(deadline));
             SCHEDULE_CHANGED.notify(1);
         }
@@ -103,15 +137,31 @@ impl FileLike for TimerFd {
             return Err(AxError::InvalidInput);
         }
         block_on(poll_io(self, IoEvents::IN, self.nonblocking(), || {
-            let mut current = self.deadline.lock();
+            let mut current = self.state.lock();
+            let now = monotonic_time();
             let deadline = current
-                .filter(|deadline| *deadline <= monotonic_time())
+                .deadline
+                .filter(|deadline| *deadline <= now)
                 .ok_or(AxError::WouldBlock)?;
-            TIMERS.lock().remove(&self.key(deadline));
-            *current = None;
+            let (expirations, next) = if current.interval.is_zero() {
+                (1, None)
+            } else {
+                let (expirations, until_next) = periodic_progress(now - deadline, current.interval);
+                (expirations, now.checked_add(until_next))
+            };
+            let mut timers = TIMERS.lock();
+            timers.remove(&self.key(deadline));
+            if let Some(next) = next {
+                timers.insert(self.key(next), self.weak_self.clone());
+            }
+            current.deadline = next;
+            drop(timers);
             // A user copy may fault and enter the scheduler.
             drop(current);
-            dst.write(&1u64.to_ne_bytes())?;
+            if next.is_some() {
+                SCHEDULE_CHANGED.notify(1);
+            }
+            dst.write(&expirations.to_ne_bytes())?;
             Ok(size_of::<u64>())
         }))
     }
@@ -163,7 +213,7 @@ async fn dispatch_timers() {
         drop(timers);
         if let Some(((deadline, _), timer)) = expired {
             if let Some(timer) = timer.upgrade()
-                && *timer.deadline.lock() == Some(deadline)
+                && timer.state.lock().deadline == Some(deadline)
             {
                 timer.readable.wake();
             }

@@ -4,7 +4,7 @@
 
 ## 状态与复现
 
-新增的 `timerfd` 与带超时任务重派演示见 [任务超时重派](DEADLINE_QUEUE.md)。运行 `bash coursework/scripts/demo.sh deadline_queue` 可观察任务 42 重派与迟到结果丢弃。
+`timerfd`、任务超时重派、周期到期计数及进程退出恢复见 [定时与任务恢复](DEADLINE_QUEUE.md)。运行 `bash coursework/scripts/demo.sh timerfd_periodic` 或 `bash coursework/scripts/demo.sh worker_recovery` 可分别观察积累的到期次数和工作进程替换。
 
 多生产者任务、通知往返性能、独立重建和 2/4 核验证的命令与证据见 [扩展验证](EXTENDED_VALIDATION.md)。使用 `bash coursework/scripts/demo.sh task_queue` 演示四生产者任务处理。
 
