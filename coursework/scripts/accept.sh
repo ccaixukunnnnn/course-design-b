@@ -71,7 +71,8 @@ for harness in coursework/tests/*_harness.rs; do
     run "test-$name" "$work/$name"
 done
 run clippy cargo clippy --workspace --locked --offline --target-dir "$clippy_target" --target riscv64gc-unknown-none-elf --features qemu -- -D warnings -A unused
-run build make ARCH=riscv64 NET=n SMP=1 TARGET_DIR="$build_target" build
+# Pin the output name so it matches in WSL and in any checkout directory.
+run build make ARCH=riscv64 NET=n SMP=1 APP_NAME=project TARGET_DIR="$build_target" build
 cp project_riscv64-qemu-virt.bin "$work/kernel.bin"
 suites=(three_aspects security_regression task_notifier epoll_regression epoll_concurrent task_queue event_stress)
 for suite in "${suites[@]}"; do
@@ -85,3 +86,4 @@ for suite in "${suites[@]}"; do
 done
 run verify-inputs sha256sum --check --quiet "$evidence/inputs.sha256"
 run verify-source sha256sum --check --quiet "$evidence/source.sha256"
+
