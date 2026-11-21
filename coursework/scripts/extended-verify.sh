@@ -21,12 +21,13 @@ evidence=$(mktemp -d "$root/coursework/logs/extended-${cpus}cpu-XXXXXXXX")
 trap 'rc=$?; echo "$rc" > "$evidence/exit-code"' EXIT
 printf 'Extended verification %s\n' "$evidence"
 inputs=("$kernel" rootfs-riscv64.img coursework/scripts/qemu-three.py coursework/scripts/extended-verify.sh)
-for suite in task_queue event_stress epoll_regression; do
+suites=(task_queue event_stress epoll_regression epoll_concurrent)
+for suite in "${suites[@]}"; do
     .local/riscv64-linux-musl-cross/bin/riscv64-linux-musl-gcc -static -no-pie -std=c11 -O2 -Wall -Wextra -Werror "coursework/tests/$suite.c" -o "$evidence/$suite.bin"
     inputs+=("coursework/tests/$suite.c" "$evidence/$suite.bin")
 done
 sha256sum "${inputs[@]}" > "$evidence/inputs.sha256"
-for suite in task_queue event_stress epoll_regression; do
+for suite in "${suites[@]}"; do
     python3 coursework/scripts/qemu-three.py --kernel "$kernel" --cpus "$cpus" --guest "$evidence/$suite.bin" --mode verify > "$evidence/$suite.log" 2>&1 || { tail -30 "$evidence/$suite.log"; exit 1; }
     printf '%s PASS\n' "$suite"
 done

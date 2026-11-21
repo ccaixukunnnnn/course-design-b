@@ -29,7 +29,50 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for suite in epoll_regression task_notifier eventfd_semantics task_queue event_stress; do
+          for suite in epoll_regression epoll_concurrent task_notifier eventfd_semantics task_queue event_stress; do
             gcc -std=c11 -O2 -Wall -Wextra -Werror "coursework/tests/$suite.c" -o "/tmp/coursework-tests/$suite"
             timeout 30 "/tmp/coursework-tests/$suite"
           done
+
+  riscv64-guest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      COURSEWORK_EVIDENCE_DIR: ${{ runner.temp }}/coursework-evidence
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-02-25
+          components: rust-src, llvm-tools, rustfmt, clippy
+          targets: riscv64gc-unknown-none-elf
+      - name: Install host tools and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential cmake clang libclang-dev qemu-system-misc opensbi e2fsprogs
+          qemu-system-riscv64 --version
+      - name: Install verified RISC-V musl toolchain
+        run: |
+          archive="$RUNNER_TEMP/riscv64-linux-musl-cross.tgz"
+          curl --fail --location --retry 3 --output "$archive" https://github.com/arceos-org/setup-musl/releases/download/prebuilt/riscv64-linux-musl-cross.tgz
+          printf '%s  %s\n' db0bc413bd4a93f2012cc74b9ba0c4af29d8bc18b88e9c61998738ccb918604b "$archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/riscv64-linux-musl-cross/bin" >> "$GITHUB_PATH"
+      - name: Install pinned Cargo build tools
+        run: |
+          cargo install --locked cargo-axplat --version 0.4.10
+          cargo install --locked axconfig-gen --version 0.2.1
+          cargo install --locked cargo-binutils --version 0.4.0
+      - name: Prepare and verify root filesystem
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/rootfs-riscv64.img.xz" https://github.com/Starry-OS/rootfs/releases/download/20260214/rootfs-riscv64.img.xz
+          xz --decompress --stdout "$RUNNER_TEMP/rootfs-riscv64.img.xz" > rootfs-riscv64.img
+          printf '%s  %s\n' 636840a4feda55e10f5d1dce394fd733d16ed626b97668239024d9ac2c5aaef6 rootfs-riscv64.img | sha256sum --check
+      - name: Build and run RISC-V guest acceptance
+        run: bash coursework/scripts/accept.sh --system
+      - name: Upload acceptance logs and manifests
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: riscv64-coursework-acceptance
+          path: ${{ env.COURSEWORK_EVIDENCE_DIR }}
