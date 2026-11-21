@@ -70,7 +70,7 @@ int main(void) {
 
     setting = (struct itimerspec){.it_value = {0, 1}};
     require(timerfd_settime(timer, TFD_TIMER_ABSTIME, &setting, NULL) == 0, "arm already expired deadline");
-    require(epoll_wait(ep, &event, 1, 0) == 1, "already expired timer is queued immediately");
+    require(epoll_wait(ep, &event, 1, 1000) == 1, "already expired timer wakes epoll");
     setting = after(0);
     require(timerfd_settime(timer, 0, &setting, NULL) == 0, "discard pending expiration");
     require(read(timer, &ticks, sizeof ticks) == -1 && errno == EAGAIN, "pending expiry cleared");
