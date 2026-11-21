@@ -1,6 +1,10 @@
 name: Coursework regression
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -37,8 +41,6 @@ jobs:
   riscv64-guest:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    env:
-      COURSEWORK_EVIDENCE_DIR: ${{ runner.temp }}/coursework-evidence
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@master
@@ -69,10 +71,13 @@ jobs:
           xz --decompress --stdout "$RUNNER_TEMP/rootfs-riscv64.img.xz" > rootfs-riscv64.img
           printf '%s  %s\n' 636840a4feda55e10f5d1dce394fd733d16ed626b97668239024d9ac2c5aaef6 rootfs-riscv64.img | sha256sum --check
       - name: Build and run RISC-V guest acceptance
+        env:
+          COURSEWORK_EVIDENCE_DIR: ${{ runner.temp }}/coursework-evidence
         run: bash coursework/scripts/accept.sh --system
       - name: Upload acceptance logs and manifests
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: riscv64-coursework-acceptance
-          path: ${{ env.COURSEWORK_EVIDENCE_DIR }}
+          path: ${{ runner.temp }}/coursework-evidence
+
