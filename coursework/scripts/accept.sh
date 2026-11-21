@@ -86,4 +86,3 @@ for suite in "${suites[@]}"; do
 done
 run verify-inputs sha256sum --check --quiet "$evidence/inputs.sha256"
 run verify-source sha256sum --check --quiet "$evidence/source.sha256"
-
