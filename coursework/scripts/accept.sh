@@ -74,7 +74,7 @@ run clippy cargo clippy --workspace --locked --offline --target-dir "$clippy_tar
 # Pin the output name so it matches in WSL and in any checkout directory.
 run build make ARCH=riscv64 NET=n SMP=1 APP_NAME=project TARGET_DIR="$build_target" build
 cp project_riscv64-qemu-virt.bin "$work/kernel.bin"
-suites=(three_aspects security_regression task_notifier epoll_regression epoll_concurrent task_queue event_stress timerfd_regression deadline_queue timerfd_periodic worker_recovery)
+suites=(three_aspects security_regression task_notifier epoll_regression epoll_concurrent task_queue event_stress timerfd_regression deadline_queue timerfd_periodic worker_recovery inotify_regression folder_service)
 for suite in "${suites[@]}"; do
     run "compile-$suite" riscv64-linux-musl-gcc -static -no-pie -std=c11 -O2 -Wall -Wextra -Werror "coursework/tests/$suite.c" -o "$work/$suite"
 done

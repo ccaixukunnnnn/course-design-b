@@ -4,6 +4,8 @@
 
 ## 状态与复现
 
+`inotify` 目录监视、文件投递、工作进程重启和溢出重扫见 [目录事件与文件处理服务](FOLDER_SERVICE.md)。运行 `bash coursework/scripts/demo.sh folder_service` 一键验收，也可加 `--interactive` 在 StarryOS 控制台现场投递。
+
 `timerfd`、任务超时重派、周期到期计数及进程退出恢复见 [定时与任务恢复](DEADLINE_QUEUE.md)。运行 `bash coursework/scripts/demo.sh timerfd_periodic` 或 `bash coursework/scripts/demo.sh worker_recovery` 可分别观察积累的到期次数和工作进程替换。
 
 多生产者任务、通知往返性能、独立重建和 2/4 核验证的命令与证据见 [扩展验证](EXTENDED_VALIDATION.md)。使用 `bash coursework/scripts/demo.sh task_queue` 演示四生产者任务处理。

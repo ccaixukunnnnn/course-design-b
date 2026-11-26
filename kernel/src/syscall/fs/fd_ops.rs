@@ -7,7 +7,9 @@ use core::{
 
 use axerrno::{AxError, AxResult};
 use axfs::{FS_CONTEXT, FileBackend, OpenOptions, OpenResult};
-use axfs_ng_vfs::{DirEntry, FileNode, Location, NodePermission, NodeType, Reference};
+use axfs_ng_vfs::{
+    DirEntry, FileNode, Location, NodePermission, NodeType, Reference, VfsError, path::Path,
+};
 use axtask::current;
 use bitflags::bitflags;
 use linux_raw_sys::general::*;
@@ -15,6 +17,7 @@ use linux_raw_sys::general::*;
 use crate::{
     file::{
         Directory, FD_TABLE, File, FileLike, Pipe, add_file_like, close_file_like, get_file_like,
+        inotify::{self, NOTIFY_NAMESPACE},
         with_fs,
     },
     mm::{UserPtr, vm_load_string},
@@ -126,9 +129,24 @@ pub fn sys_openat(
     let mode = mode & !current().as_thread().proc_data.umask();
 
     let options = flags_to_options(flags, mode, (sys_geteuid()? as _, sys_getegid()? as _));
-    with_fs(dirfd, |fs| options.open(fs, path))
-        .and_then(|it| add_to_fd(it, flags as _))
-        .map(|fd| fd as isize)
+    let result = if flags as u32 & O_CREAT != 0 {
+        let _namespace = NOTIFY_NAMESPACE.lock();
+        with_fs(dirfd, |fs| {
+            let missing = fs.resolve_parent(Path::new(&path)).ok().filter(|(dir, name)| {
+                matches!(dir.lookup_no_follow(name), Err(err) if err.canonicalize() == VfsError::NotFound)
+            });
+            let result = options.open(fs, path.as_str());
+            if let Some((dir, name)) = missing
+                && let Ok(child) = dir.lookup_no_follow(&name)
+            {
+                inotify::created(&dir, &child);
+            }
+            result
+        })?
+    } else {
+        with_fs(dirfd, |fs| options.open(fs, path))?
+    };
+    add_to_fd(result, flags as _).map(|fd| fd as isize)
 }
 
 /// Open a file by `filename` and insert it into the file descriptor table.

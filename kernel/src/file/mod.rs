@@ -3,6 +3,7 @@ pub mod event;
 mod event_counter;
 mod event_poll;
 mod fs;
+pub(crate) mod inotify;
 mod net;
 mod pidfd;
 mod pipe;

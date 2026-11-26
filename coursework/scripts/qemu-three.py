@@ -15,7 +15,9 @@ ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
 parser.add_argument("--kernel", type=Path, required=True)
 parser.add_argument("--guest", type=Path, default=ROOT / ".local/tests/three-aspects-riscv64")
-parser.add_argument("--mode", choices=("probe", "verify", "bench"), required=True)
+run_mode = parser.add_mutually_exclusive_group(required=True)
+run_mode.add_argument("--mode", choices=("probe", "verify", "bench"))
+run_mode.add_argument("--interactive", action="store_true", help="Hand the private guest console to the user")
 parser.add_argument("--timeout", type=int, default=180)
 parser.add_argument("--cpus", type=int, choices=(1, 2, 4), default=1)
 args = parser.parse_args()
@@ -27,7 +29,9 @@ if not test.is_file() or not image.is_file():
 if any(c in str(test) for c in '"\n\r'):
     sys.exit("Unsupported path for debugfs")
 
-with tempfile.TemporaryDirectory(prefix="three-qemu-", dir=ROOT / ".local") as tmp:
+# Keep the writable copy on the host's temporary filesystem, which avoids a
+# full image write through the Windows-mounted project directory under WSL.
+with tempfile.TemporaryDirectory(prefix="three-qemu-") as tmp:
     disk = Path(tmp) / "disk.img"
     shutil.copyfile(image, disk)
     subprocess.run(["debugfs", "-w", "-R", f'write "{test}" /three-test', str(disk)], check=True)
@@ -36,12 +40,16 @@ with tempfile.TemporaryDirectory(prefix="three-qemu-", dir=ROOT / ".local") as t
     subprocess.run(["debugfs", "-R", "dump /three-test injected", str(disk)], cwd=tmp, check=True)
     if copied.read_bytes() != test.read_bytes():
         sys.exit("Injected guest differs from the compiled test")
+    console = ["-display", "none", "-serial", "mon:stdio"] if args.interactive else ["-nographic", "-monitor", "none"]
     cmd = [
         "qemu-system-riscv64", "-machine", "virt", "-bios", "default", "-m", "1G",
-        "-smp", str(args.cpus), "-nographic", "-monitor", "none", "-kernel", str(kernel),
+        "-smp", str(args.cpus), *console, "-kernel", str(kernel),
         "-device", "virtio-blk-pci,drive=disk0", "-drive",
         f"id=disk0,if=none,format=raw,file={disk}",
     ]
+    if args.interactive:
+        sys.exit(subprocess.run(cmd, check=False).returncode)
+
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = bytearray()
     sent = False
