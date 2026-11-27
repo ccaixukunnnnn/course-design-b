@@ -1,0 +1,99 @@
+command: make ARCH=riscv64 NET=n TARGET_DIR=/tmp/starry-course-b-cache.fUCcraQe/project/.local/baseline/target build 
+make[1]: Entering directory '/mnt/d/OS experiment/course-design-b/make'
+[37maxconfig-gen[0m [90mdefconfig.toml /tmp/starry-course-b-cache.fUCcraQe/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axplat-riscv64-qemu-virt-0.3.1-pre.6/axconfig.toml  -w arch=riscv64 -w platform=riscv64-qemu-virt -o "/tmp/starry-course-b-cache.fUCcraQe/project/.axconfig.toml" -w plat.phys-memory-size=1073741824[0m
+make[1]: Leaving directory '/mnt/d/OS experiment/course-design-b/make'
+make[1]: Entering directory '/mnt/d/OS experiment/course-design-b/make'
+[37maxconfig-gen[0m [90mdefconfig.toml /tmp/starry-course-b-cache.fUCcraQe/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axplat-riscv64-qemu-virt-0.3.1-pre.6/axconfig.toml  -w arch=riscv64 -w platform=riscv64-qemu-virt -o "/tmp/starry-course-b-cache.fUCcraQe/project/.axconfig.toml" -w plat.phys-memory-size=1073741824 -c "/tmp/starry-course-b-cache.fUCcraQe/project/.axconfig.toml"[0m
+    [92;1mBuilding[0m App: project, Arch: riscv64, Platform: riscv64-qemu-virt, App type: rust
+[37mcargo -C /tmp/starry-course-b-cache.fUCcraQe/project build[0m [90m-Z unstable-options --target riscv64gc-unknown-none-elf --target-dir /tmp/starry-course-b-cache.fUCcraQe/project/.local/baseline/target --release  --features "axfeat/defplat axfeat/dwarf qemu"[0m
+warning: method `get_as_mut_null_terminated` is never used
+   --> kernel/src/mm/access.rs:165:12
+    |
+136 | impl<T> UserPtr<T> {
+    | ------------------ method in this implementation
+...
+165 |     pub fn get_as_mut_null_terminated(self) -> AxResult<&'static mut [T]>
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `cast_mut` is never used
+   --> kernel/src/mm/access.rs:346:12
+    |
+339 | impl VmBytes {
+    | ------------ method in this implementation
+...
+346 |     pub fn cast_mut(&self) -> VmBytesMut {
+    |            ^^^^^^^^
+
+warning: method `cast_const` is never used
+   --> kernel/src/mm/access.rs:388:12
+    |
+381 | impl VmBytesMut {
+    | --------------- method in this implementation
+...
+388 |     pub fn cast_const(&self) -> VmBytes {
+    |            ^^^^^^^^^^
+
+warning: methods `read_with` and `fill_with` are never used
+  --> kernel/src/mm/io.rs:38:12
+   |
+22 | impl IoVectorBuf {
+   | ---------------- methods in this implementation
+...
+38 |     pub fn read_with(
+   |            ^^^^^^^^^
+...
+57 |     pub fn fill_with(
+   |            ^^^^^^^^^
+
+warning: function `clear_elf_cache` is never used
+   --> kernel/src/mm/loader.rs:257:8
+    |
+257 | pub fn clear_elf_cache() {
+    |        ^^^^^^^^^^^^^^^
+
+warning: function `create_pty_master` is never used
+  --> kernel/src/pseudofs/dev/tty/mod.rs:37:8
+   |
+37 | pub fn create_pty_master(fs: Arc<SimpleFs>) -> AxResult<Arc<PtyDriver>> {
+   |        ^^^^^^^^^^^^^^^^^
+
+warning: variant `ReadOnly` is never constructed
+  --> kernel/src/pseudofs/device.rs:22:5
+   |
+16 | pub enum DeviceMmap {
+   |          ---------- variant in this enum
+...
+22 |     ReadOnly,
+   |     ^^^^^^^^
+
+warning: method `remove_by_key` is never used
+   --> kernel/src/syscall/ipc/shm.rs:218:12
+    |
+181 | / impl<K, V> BiBTreeMap<K, V>
+182 | | where
+183 | |     K: Ord + Clone,
+184 | |     V: Ord + Clone,
+    | |___________________- method in this implementation
+...
+218 |       pub fn remove_by_key(&mut self, key: &K) -> Option<V> {
+    |              ^^^^^^^^^^^^^
+
+warning: function `cleanup_task_tables` is never used
+  --> kernel/src/task/ops.rs:34:8
+   |
+34 | pub fn cleanup_task_tables() {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `get_session` is never used
+   --> kernel/src/task/ops.rs:108:8
+    |
+108 | pub fn get_session(sid: Pid) -> AxResult<Arc<Session>> {
+    |        ^^^^^^^^^^^
+
+warning: `starry-kernel` (lib) generated 10 warnings
+    Finished `release` profile [optimized] target(s) in 7.50s
+[37m./dwarf.sh[0m [90m/tmp/starry-course-b-cache.fUCcraQe/project/project_riscv64-qemu-virt.elf rust-objcopy --binary-architecture=riscv64[0m
+[37mrust-objcopy --binary-architecture=riscv64[0m [90m/tmp/starry-course-b-cache.fUCcraQe/project/project_riscv64-qemu-virt.elf --strip-all -O binary /tmp/starry-course-b-cache.fUCcraQe/project/project_riscv64-qemu-virt.bin[0m
+make[1]: Leaving directory '/mnt/d/OS experiment/course-design-b/make'

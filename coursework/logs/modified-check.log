@@ -1,0 +1,195 @@
+   Compiling proc-macro2 v1.0.106
+   Compiling quote v1.0.45
+   Compiling axerrno v0.2.2
+   Compiling syn v1.0.109
+   Compiling rustversion v1.0.22
+   Compiling paste v1.0.15
+   Compiling linkme-impl v0.3.35
+   Compiling linkme v0.3.35
+   Compiling axplat-riscv64-qemu-virt v0.3.1-pre.6
+   Compiling typeid v1.0.3
+   Compiling libc v0.2.183
+   Compiling prettyplease v0.2.37
+   Compiling clang-sys v1.8.1
+   Compiling axdriver v0.3.0-preview.2
+   Compiling bindgen v0.72.1
+   Compiling axio v0.3.0-pre.1
+   Compiling heapless v0.8.0
+   Compiling num-traits v0.2.19
+   Compiling scope-local v0.1.2
+   Compiling starry-smoltcp v0.12.1-preview.1
+   Compiling proc-macro2-diagnostics v0.10.1
+   Compiling zerocopy v0.8.41
+    Checking chrono v0.4.44
+   Compiling syn v2.0.117
+   Compiling syscalls v0.8.1
+   Compiling starry-signal v0.3.0
+    Checking uart_16550 v0.4.0
+   Compiling darling_core v0.13.4
+   Compiling svgbobdoc v0.3.0
+   Compiling strum_macros v0.27.2
+   Compiling crate_interface v0.1.4
+   Compiling clap_derive v4.5.55
+   Compiling riscv-macros v0.4.0
+   Compiling percpu_macros v0.2.3-preview.1
+    Checking rlsf v0.2.2
+    Checking kernel_guard v0.1.3
+   Compiling axplat-macros v0.1.0
+    Checking riscv v0.16.0
+    Checking kspin v0.1.1
+    Checking percpu v0.2.3-preview.1
+   Compiling crate_interface v0.3.0
+   Compiling zerocopy-derive v0.7.35
+    Checking axcpu v0.3.0-preview.8
+   Compiling enumn v0.1.14
+   Compiling extern-trait-impl v0.4.1
+   Compiling clap v4.5.60
+    Checking strum v0.27.2
+   Compiling axconfig-gen v0.2.1
+    Checking axdriver_input v0.1.4-preview.3
+   Compiling futures-macro v0.3.32
+    Checking axerrno v0.1.2
+   Compiling darling_macro v0.13.4
+    Checking axallocator v0.2.0
+    Checking axplat v0.3.1-pre.6
+    Checking page_table_multiarch v0.6.1
+   Compiling axconfig-macros v0.2.1
+    Checking axalloc v0.3.0-preview.2
+   Compiling lwext4_rust v0.2.0
+    Checking zerocopy v0.7.35
+    Checking axfs_vfs v0.1.2
+    Checking axfs_devfs v0.1.2
+    Checking axfs_ramfs v0.1.2
+    Checking extern-trait v0.4.1
+    Checking virtio-drivers v0.7.5
+    Checking memory_set v0.4.1
+   Compiling async-trait v0.1.89
+   Compiling trait-ffi v0.2.11
+   Compiling bytemuck_derive v1.10.2
+    Checking axdriver_pci v0.1.4-preview.3
+    Checking futures-util v0.3.32
+    Checking axdriver_virtio v0.1.4-preview.3
+   Compiling ctor_bare_macros v0.2.1
+   Compiling darling v0.13.4
+   Compiling enum_dispatch v0.3.13
+   Compiling inherit-methods-macro v0.1.0
+   Compiling axconfig v0.3.0-preview.2
+    Checking axklib v0.3.0
+   Compiling axhal v0.3.0-preview.2
+    Checking bytemuck v1.25.0
+    Checking axlog v0.3.0-preview.2
+   Compiling derive_more-impl v2.1.1
+   Compiling zerocopy-derive v0.8.41
+    Checking ctor_bare v0.2.1
+    Checking starry-vm v0.3.0
+   Compiling ouroboros_macro v0.18.5
+   Compiling strum_macros v0.28.0
+    Checking axfs-ng-vfs v0.1.1
+   Compiling num_enum_derive v0.7.5
+    Checking starry-process v0.2.0
+    Checking axtask v0.3.0-preview.2
+    Checking axmm v0.3.0-preview.2
+    Checking axfs v0.3.0-preview.2
+    Checking axsync v0.3.0-preview.2
+    Checking num_enum v0.7.5
+    Checking ouroboros v0.18.5
+    Checking axnet v0.3.0-preview.2
+    Checking axdisplay v0.3.0-preview.2
+    Checking axinput v0.3.0-preview.2
+    Checking strum v0.28.0
+    Checking kernel-elf-parser v0.3.4
+    Checking derive_more v2.1.1
+    Checking axfs-ng v0.3.0-preview.2
+    Checking axnet-ng v0.3.0-preview.2
+    Checking axruntime v0.3.0-preview.2
+    Checking axfeat v0.3.0-preview.2
+    Checking starry-kernel v0.2.0-preview.2 (/mnt/d/OS experiment/course-design-b/kernel)
+warning: method `get_as_mut_null_terminated` is never used
+   --> kernel/src/mm/access.rs:165:12
+    |
+136 | impl<T> UserPtr<T> {
+    | ------------------ method in this implementation
+...
+165 |     pub fn get_as_mut_null_terminated(self) -> AxResult<&'static mut [T]>
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `cast_mut` is never used
+   --> kernel/src/mm/access.rs:346:12
+    |
+339 | impl VmBytes {
+    | ------------ method in this implementation
+...
+346 |     pub fn cast_mut(&self) -> VmBytesMut {
+    |            ^^^^^^^^
+
+warning: method `cast_const` is never used
+   --> kernel/src/mm/access.rs:388:12
+    |
+381 | impl VmBytesMut {
+    | --------------- method in this implementation
+...
+388 |     pub fn cast_const(&self) -> VmBytes {
+    |            ^^^^^^^^^^
+
+warning: methods `read_with` and `fill_with` are never used
+  --> kernel/src/mm/io.rs:38:12
+   |
+22 | impl IoVectorBuf {
+   | ---------------- methods in this implementation
+...
+38 |     pub fn read_with(
+   |            ^^^^^^^^^
+...
+57 |     pub fn fill_with(
+   |            ^^^^^^^^^
+
+warning: function `clear_elf_cache` is never used
+   --> kernel/src/mm/loader.rs:257:8
+    |
+257 | pub fn clear_elf_cache() {
+    |        ^^^^^^^^^^^^^^^
+
+warning: function `create_pty_master` is never used
+  --> kernel/src/pseudofs/dev/tty/mod.rs:37:8
+   |
+37 | pub fn create_pty_master(fs: Arc<SimpleFs>) -> AxResult<Arc<PtyDriver>> {
+   |        ^^^^^^^^^^^^^^^^^
+
+warning: variant `ReadOnly` is never constructed
+  --> kernel/src/pseudofs/device.rs:22:5
+   |
+16 | pub enum DeviceMmap {
+   |          ---------- variant in this enum
+...
+22 |     ReadOnly,
+   |     ^^^^^^^^
+
+warning: method `remove_by_key` is never used
+   --> kernel/src/syscall/ipc/shm.rs:218:12
+    |
+181 | / impl<K, V> BiBTreeMap<K, V>
+182 | | where
+183 | |     K: Ord + Clone,
+184 | |     V: Ord + Clone,
+    | |___________________- method in this implementation
+...
+218 |       pub fn remove_by_key(&mut self, key: &K) -> Option<V> {
+    |              ^^^^^^^^^^^^^
+
+warning: function `cleanup_task_tables` is never used
+  --> kernel/src/task/ops.rs:34:8
+   |
+34 | pub fn cleanup_task_tables() {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `get_session` is never used
+   --> kernel/src/task/ops.rs:108:8
+    |
+108 | pub fn get_session(sid: Pid) -> AxResult<Arc<Session>> {
+    |        ^^^^^^^^^^^
+
+warning: `starry-kernel` (lib) generated 10 warnings
+    Checking starryos v0.2.0-preview.2 (/mnt/d/OS experiment/course-design-b)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 28s

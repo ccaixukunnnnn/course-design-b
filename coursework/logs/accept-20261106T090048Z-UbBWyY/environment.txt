@@ -1,0 +1,11 @@
+2e075accf4fb0aefdd1d252ebd9ccf29727d9923
+rustc 1.95.0-nightly (859951e3c 2026-02-24)
+binary: rustc
+commit-hash: 859951e3c7c9d0322c39bad49221937455bdffcd
+commit-date: 2026-02-24
+host: x86_64-unknown-linux-gnu
+release: 1.95.0-nightly
+LLVM version: 22.1.0
+cargo 1.95.0-nightly (8cc0cb136 2026-02-17)
+QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+Copyright (c) 2003-2023 Fabrice Bellard and the QEMU Project developers

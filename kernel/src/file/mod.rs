@@ -1,10 +1,14 @@
 pub mod epoll;
 pub mod event;
+mod event_counter;
+mod event_poll;
 mod fs;
+pub(crate) mod inotify;
 mod net;
 mod pidfd;
 mod pipe;
 pub mod signalfd;
+pub(crate) mod timerfd;
 
 use alloc::{borrow::Cow, sync::Arc};
 use core::{ffi::c_int, time::Duration};

@@ -1,4 +1,3 @@
-use alloc::vec;
 use core::ffi::c_char;
 
 use axconfig::ARCH;
@@ -10,6 +9,7 @@ use linux_raw_sys::{
 };
 use starry_vm::{VmMutPtr, vm_write_slice};
 
+use super::random_stream::copy_bounded;
 use crate::task::processes;
 
 pub fn sys_getuid() -> AxResult<isize> {
@@ -28,14 +28,20 @@ pub fn sys_getegid() -> AxResult<isize> {
     Ok(0)
 }
 
-pub fn sys_setuid(_uid: u32) -> AxResult<isize> {
-    debug!("sys_setuid <= uid: {_uid}");
-    Ok(0)
+pub fn sys_setuid(uid: u32) -> AxResult<isize> {
+    match uid {
+        0 => Ok(0),
+        u32::MAX => Err(AxError::InvalidInput),
+        _ => Err(AxError::Unsupported),
+    }
 }
 
-pub fn sys_setgid(_gid: u32) -> AxResult<isize> {
-    debug!("sys_setgid <= gid: {_gid}");
-    Ok(0)
+pub fn sys_setgid(gid: u32) -> AxResult<isize> {
+    match gid {
+        0 => Ok(0),
+        u32::MAX => Err(AxError::InvalidInput),
+        _ => Err(AxError::Unsupported),
+    }
 }
 
 pub fn sys_getgroups(size: usize, list: *mut u32) -> AxResult<isize> {
@@ -48,7 +54,7 @@ pub fn sys_getgroups(size: usize, list: *mut u32) -> AxResult<isize> {
 }
 
 pub fn sys_setgroups(_size: usize, _list: *const u32) -> AxResult<isize> {
-    Ok(0)
+    Err(AxError::Unsupported)
 }
 
 const fn pad_str(info: &str) -> [c_char; 65] {
@@ -84,6 +90,18 @@ pub fn sys_sysinfo(info: *mut sysinfo) -> AxResult<isize> {
     Ok(0)
 }
 
+/// Report the current CPU and the only supported NUMA node as a snapshot.
+pub fn sys_getcpu(cpu: *mut u32, node: *mut u32) -> AxResult<isize> {
+    let cpu_id = axhal::percpu::this_cpu_id() as u32;
+    if !cpu.is_null() {
+        cpu.vm_write(cpu_id)?;
+    }
+    if !node.is_null() {
+        node.vm_write(0)?;
+    }
+    Ok(0)
+}
+
 pub fn sys_syslog(_type: i32, _buf: *mut c_char, _len: usize) -> AxResult<isize> {
     Ok(0)
 }
@@ -98,10 +116,13 @@ bitflags::bitflags! {
 }
 
 pub fn sys_getrandom(buf: *mut u8, len: usize, flags: u32) -> AxResult<isize> {
+    let flags = GetRandomFlags::from_bits(flags).ok_or(AxError::InvalidInput)?;
+    if flags.contains(GetRandomFlags::RANDOM | GetRandomFlags::INSECURE) {
+        return Err(AxError::InvalidInput);
+    }
     if len == 0 {
         return Ok(0);
     }
-    let flags = GetRandomFlags::from_bits_retain(flags);
 
     debug!("sys_getrandom <= buf: {buf:p}, len: {len}, flags: {flags:?}");
 
@@ -112,17 +133,20 @@ pub fn sys_getrandom(buf: *mut u8, len: usize, flags: u32) -> AxResult<isize> {
     };
 
     let f = FS_CONTEXT.lock().resolve(path)?;
-    let mut kbuf = vec![0; len];
-    let len = f.entry().as_file()?.read_at(&mut kbuf, 0)?;
-
-    vm_write_slice(buf, &kbuf)?;
-
-    Ok(len as _)
+    let file = f.entry().as_file()?;
+    let limit = len.min(isize::MAX as usize);
+    copy_bounded(
+        limit,
+        |bytes| file.read_at(bytes, 0),
+        |offset, bytes| vm_write_slice(buf.wrapping_add(offset), bytes).map_err(Into::into),
+        AxError::Io,
+    )
+    .map(|written| written as _)
 }
 
 pub fn sys_seccomp(_op: u32, _flags: u32, _args: *const ()) -> AxResult<isize> {
-    warn!("dummy sys_seccomp");
-    Ok(0)
+    // Never report success for a filter that was not installed.
+    Err(AxError::Unsupported)
 }
 
 #[cfg(target_arch = "riscv64")]

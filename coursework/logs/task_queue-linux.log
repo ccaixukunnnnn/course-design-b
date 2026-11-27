@@ -1,0 +1,4 @@
+QUEUE mode=normal producers=4 completed=1024 checksum=22500864 failed_producer=-1 PASS
+QUEUE mode=semaphore producers=4 completed=1024 checksum=22500864 failed_producer=-1 PASS
+QUEUE mode=normal producers=4 completed=896 checksum=17582912 failed_producer=2 PASS
+VERIFY: PASS

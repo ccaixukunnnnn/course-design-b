@@ -1,0 +1,3 @@
+CHURN iterations=512 PASS
+CONSUMERS workers=4 tokens=4096 PASS
+VERIFY: PASS

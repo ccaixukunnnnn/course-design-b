@@ -1,0 +1,2 @@
+command: cargo clippy --workspace --locked --offline --target-dir /tmp/starry-course-b-cache.fUCcraQe/project/.local/target-short-baseline --target riscv64gc-unknown-none-elf --features qemu -- -D warnings -A unused 
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.11s

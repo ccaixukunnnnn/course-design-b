@@ -1,0 +1,3 @@
+command: sha256sum --check --quiet /mnt/d/OS\ experiment/course-design-b/coursework/logs/accept-20261106T085559Z-P08VUo/source.sha256 
+kernel/src/file/epoll.rs: FAILED
+sha256sum: WARNING: 1 computed checksum did NOT match

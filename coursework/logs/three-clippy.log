@@ -1,0 +1,23 @@
+    Checking rlsf v0.2.2
+    Checking uart_16550 v0.4.0
+    Checking lwext4_rust v0.2.0
+    Checking num_enum v0.7.5
+    Checking axplat-riscv64-qemu-virt v0.3.1-pre.6
+    Checking axallocator v0.2.0
+    Checking axalloc v0.3.0-preview.2
+    Checking axhal v0.3.0-preview.2
+    Checking axtask v0.3.0-preview.2
+    Checking axdriver v0.3.0-preview.2
+    Checking axmm v0.3.0-preview.2
+    Checking axfs v0.3.0-preview.2
+    Checking axsync v0.3.0-preview.2
+    Checking axfs-ng v0.3.0-preview.2
+    Checking axnet v0.3.0-preview.2
+    Checking axinput v0.3.0-preview.2
+    Checking axdisplay v0.3.0-preview.2
+    Checking axnet-ng v0.3.0-preview.2
+    Checking axruntime v0.3.0-preview.2
+    Checking axfeat v0.3.0-preview.2
+    Checking starry-kernel v0.2.0-preview.2 (/mnt/d/OS experiment/course-design-b/kernel)
+    Checking starryos v0.2.0-preview.2 (/mnt/d/OS experiment/course-design-b)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 22.99s

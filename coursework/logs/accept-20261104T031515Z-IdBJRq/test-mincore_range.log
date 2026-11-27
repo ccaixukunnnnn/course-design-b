@@ -1,0 +1,8 @@
+command: /tmp/starry-course-b-cache.fUCcraQe/project/.local/accept-bin-9De2KSD5/mincore_range 
+
+running 2 tests
+test mincore_range::tests::rejects_overflow_and_invalid_ranges ... ok
+test mincore_range::tests::validates_and_rounds_ranges ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

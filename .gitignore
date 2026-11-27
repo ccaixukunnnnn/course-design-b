@@ -13,4 +13,6 @@
 /mnt
 *.swp
 *.swo
+/.local/
+__pycache__/
 

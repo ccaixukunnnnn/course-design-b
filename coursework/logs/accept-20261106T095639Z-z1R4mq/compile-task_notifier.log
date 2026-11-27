@@ -1,0 +1,1 @@
+command: riscv64-linux-musl-gcc -static -no-pie -std=c11 -O2 -Wall -Wextra -Werror coursework/tests/task_notifier.c -o /tmp/starry-course-b-cache.fUCcraQe/project/.local/accept-bin-FFSAJ4Iz/task_notifier 

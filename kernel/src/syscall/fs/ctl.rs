@@ -17,7 +17,11 @@ use linux_raw_sys::{
 use starry_vm::{VmPtr, vm_write_slice};
 
 use crate::{
-    file::{Directory, FileLike, get_file_like, resolve_at, with_fs},
+    file::{
+        Directory, FileLike, get_file_like,
+        inotify::{self, NOTIFY_NAMESPACE},
+        resolve_at, with_fs,
+    },
     mm::vm_load_string,
     task::AsThread,
     time::TimeValueLike,
@@ -93,8 +97,12 @@ pub fn sys_mkdirat(dirfd: i32, path: *const c_char, mode: u32) -> AxResult<isize
     let mode = mode & !current().as_thread().proc_data.umask();
     let mode = NodePermission::from_bits_truncate(mode as u16);
 
+    let _namespace = NOTIFY_NAMESPACE.lock();
     with_fs(dirfd, |fs| {
-        fs.create_dir(path, mode)?;
+        let child = fs.create_dir(path, mode)?;
+        if let Some(dir) = child.parent() {
+            inotify::created(&dir, &child);
+        }
         Ok(0)
     })
 }
@@ -200,6 +208,7 @@ pub fn sys_linkat(
         warn!("Unsupported flags: {flags}");
     }
 
+    let _namespace = NOTIFY_NAMESPACE.lock();
     let old = resolve_at(old_dirfd, old_path.as_deref(), flags)?
         .into_file()
         .ok_or(AxError::BadFileDescriptor)?;
@@ -209,7 +218,8 @@ pub fn sys_linkat(
     let (new_dir, new_name) =
         with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path)))?;
 
-    new_dir.link(new_name, &old)?;
+    let child = new_dir.link(new_name, &old)?;
+    inotify::created(&new_dir, &child);
     Ok(0)
 }
 
@@ -228,12 +238,17 @@ pub fn sys_unlinkat(dirfd: i32, path: *const c_char, flags: usize) -> AxResult<i
 
     debug!("sys_unlinkat <= dirfd: {dirfd}, path: {path:?}, flags: {flags}");
 
+    let _namespace = NOTIFY_NAMESPACE.lock();
     with_fs(dirfd, |fs| {
-        if flags == AT_REMOVEDIR as _ {
-            fs.remove_dir(path)?;
+        let child = fs.resolve_no_follow(path)?;
+        let directory = flags == AT_REMOVEDIR as _;
+        let dir = child.parent().ok_or(if directory {
+            AxError::ResourceBusy
         } else {
-            fs.remove_file(path)?;
-        }
+            AxError::IsADirectory
+        })?;
+        dir.unlink(child.name(), directory)?;
+        inotify::deleted(&dir, &child);
         Ok(0)
     })
 }
@@ -283,8 +298,13 @@ pub fn sys_symlinkat(
     let linkpath = vm_load_string(linkpath)?;
     debug!("sys_symlinkat <= target: {target:?}, new_dirfd: {new_dirfd}, linkpath: {linkpath:?}");
 
+    let _namespace = NOTIFY_NAMESPACE.lock();
     with_fs(new_dirfd, |fs| {
-        fs.symlink(target, linkpath)?;
+        let (dir, name) = fs.resolve_nonexistent(Path::new(&linkpath))?;
+        fs.symlink(target, linkpath.as_str())?;
+        if let Ok(child) = dir.lookup_no_follow(name) {
+            inotify::created(&dir, &child);
+        }
         Ok(0)
     })
 }
@@ -506,11 +526,34 @@ pub fn sys_renameat2(
          new_path: {new_path}, flags: {flags}"
     );
 
+    let _namespace = NOTIFY_NAMESPACE.lock();
     let (old_dir, old_name) = with_fs(old_dirfd, |fs| fs.resolve_parent(Path::new(&old_path)))?;
     let (new_dir, new_name) =
         with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path)))?;
 
+    if flags & !(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT) != 0
+        || flags & RENAME_EXCHANGE != 0 && flags & (RENAME_NOREPLACE | RENAME_WHITEOUT) != 0
+    {
+        return Err(AxError::InvalidInput);
+    }
+    if flags & (RENAME_EXCHANGE | RENAME_WHITEOUT) != 0 {
+        return Err(AxError::Unsupported);
+    }
+    let source = old_dir.lookup_no_follow(&old_name)?;
+    let previous = new_dir.lookup_no_follow(new_name).ok();
+    if flags & RENAME_NOREPLACE != 0 && previous.is_some() {
+        return Err(AxError::AlreadyExists);
+    }
     old_dir.rename(&old_name, &new_dir, new_name)?;
+    if let Some(previous) = previous {
+        if inotify::same_object(&source, &previous) {
+            return Ok(0);
+        }
+        if previous.is_dir() {
+            inotify::invalidate_directory(&previous);
+        }
+    }
+    inotify::moved((&old_dir, &old_name), (&new_dir, new_name), &source);
     Ok(0)
 }
 

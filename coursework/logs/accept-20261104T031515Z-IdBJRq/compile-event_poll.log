@@ -1,0 +1,1 @@
+command: rustc --edition 2024 --test coursework/tests/event_poll_harness.rs -o /tmp/starry-course-b-cache.fUCcraQe/project/.local/accept-bin-9De2KSD5/event_poll 

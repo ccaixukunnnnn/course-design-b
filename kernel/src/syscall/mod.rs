@@ -3,6 +3,7 @@ mod io_mpx;
 mod ipc;
 mod mm;
 mod net;
+mod random_stream;
 mod resources;
 mod signal;
 mod sync;
@@ -364,6 +365,7 @@ pub fn handle_syscall(uctx: &mut UserContext) {
         Sysno::getpid => sys_getpid(),
         Sysno::getppid => sys_getppid(),
         Sysno::gettid => sys_gettid(),
+        Sysno::getcpu => sys_getcpu(uctx.arg0() as _, uctx.arg1() as _),
         Sysno::getrusage => sys_getrusage(uctx.arg0() as _, uctx.arg1() as _),
 
         // task sched
@@ -614,10 +616,25 @@ pub fn handle_syscall(uctx: &mut UserContext) {
             uctx.arg3() as _,
         ),
 
+        Sysno::timerfd_create => sys_timerfd_create(uctx.arg0() as _, uctx.arg1() as _),
+        Sysno::timerfd_settime => sys_timerfd_settime(
+            uctx.arg0() as _,
+            uctx.arg1() as _,
+            uctx.arg2() as _,
+            uctx.arg3() as _,
+        ),
+        Sysno::timerfd_gettime => sys_timerfd_gettime(uctx.arg0() as _, uctx.arg1() as _),
+
+        #[cfg(target_arch = "x86_64")]
+        Sysno::inotify_init => sys_inotify_init1(0),
+        Sysno::inotify_init1 => sys_inotify_init1(uctx.arg0() as _),
+        Sysno::inotify_add_watch => {
+            sys_inotify_add_watch(uctx.arg0() as _, uctx.arg1() as _, uctx.arg2() as _)
+        }
+        Sysno::inotify_rm_watch => sys_inotify_rm_watch(uctx.arg0() as _, uctx.arg1() as _),
+
         // dummy fds
-        Sysno::timerfd_create
-        | Sysno::fanotify_init
-        | Sysno::inotify_init1
+        Sysno::fanotify_init
         | Sysno::userfaultfd
         | Sysno::perf_event_open
         | Sysno::io_uring_setup

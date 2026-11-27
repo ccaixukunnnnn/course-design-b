@@ -107,6 +107,8 @@ fn release_inode(fs: &MemoryFs, inode: &Arc<Inode>, nlink: u64) {
 
 #[derive(Default)]
 struct FileContent {
+    /// Cached pages shared across every name for this inode.
+    cache: axfs_ng_vfs::NodeData,
     /// The length of the file content.
     ///
     /// We only need to store the length here because we delegate the actual
@@ -249,6 +251,10 @@ impl MemoryNode {
 }
 
 impl NodeOps for MemoryNode {
+    fn shared_data(&self) -> Option<&axfs_ng_vfs::NodeData> {
+        self.inode.as_file().ok().map(|file| &file.cache)
+    }
+
     fn inode(&self) -> u64 {
         self.inode.ino
     }
@@ -415,10 +421,12 @@ impl DirNodeOps for MemoryNode {
         let Some(entry) = entries.get(name) else {
             return Err(VfsError::NotFound);
         };
-        if let NodeContent::Dir(DirContent { entries }) = &entry.get().content
-            && entries.lock().len() > 2
-        {
-            return Err(VfsError::DirectoryNotEmpty);
+        if let NodeContent::Dir(dir) = &entry.get().content {
+            let mut children = dir.entries.lock();
+            if children.len() > 2 {
+                return Err(VfsError::DirectoryNotEmpty);
+            }
+            children.clear();
         }
         entries.remove(name);
 
@@ -442,21 +450,32 @@ impl DirNodeOps for MemoryNode {
             .lock()
             .remove(src_name)
             .ok_or(VfsError::NotFound)?;
-        dst_node
+        let moved = src_entry.get();
+        if self.inode.ino != dst_node.inode.ino
+            && let NodeContent::Dir(dir) = &moved.content
+        {
+            dir.entries.lock().insert(
+                "..".into(),
+                InodeRef::new(self.fs.clone(), dst_node.inode.ino),
+            );
+        }
+        let replaced = dst_node
             .inode
             .as_dir()?
             .entries
             .lock()
             .insert(dst_name.into(), src_entry);
+        if let Some(replaced) = replaced
+            && let NodeContent::Dir(dir) = &replaced.get().content
+        {
+            dir.entries.lock().clear();
+        }
         Ok(())
     }
 }
 
 impl Drop for MemoryNode {
     fn drop(&mut self) {
-        if let NodeContent::Dir(dir) = &self.inode.content {
-            dir.entries.lock().clear();
-        }
         release_inode(&self.fs, &self.inode, 0);
     }
 }

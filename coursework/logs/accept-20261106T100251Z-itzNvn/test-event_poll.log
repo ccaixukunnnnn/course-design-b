@@ -1,0 +1,8 @@
+command: /tmp/starry-course-b-cache.fUCcraQe/project/.local/accept-bin-WBLa0z02/event_poll 
+
+running 2 tests
+test event_poll::tests::pending_future_can_be_polled_again ... ok
+test event_poll::tests::ready_values_are_preserved ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

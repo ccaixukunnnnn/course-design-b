@@ -6,14 +6,13 @@
 //
 // This file has been modified by KylinSoft on 2025.
 
-use alloc::vec;
-
 use axerrno::{AxError, AxResult};
 use axhal::paging::MappingFlags;
 use axtask::current;
 use memory_addr::{MemoryAddr, PAGE_SIZE_4K, VirtAddr};
 use starry_vm::vm_write_slice;
 
+use super::mincore_range::checked_page_count;
 use crate::task::AsThread;
 
 /// Check whether pages are resident in memory.
@@ -51,11 +50,6 @@ pub fn sys_mincore(addr: usize, length: usize, vec: *mut u8) -> AxResult<isize> 
         return Err(AxError::InvalidInput);
     }
 
-    // EFAULT: vec must not be null (basic check, vm_write_slice will do full validation)
-    if vec.is_null() {
-        return Err(AxError::BadAddress);
-    }
-
     debug!("sys_mincore <= addr: {addr:#x}, length: {length:#x}, vec: {vec:?}");
 
     // Special case: length=0
@@ -66,54 +60,44 @@ pub fn sys_mincore(addr: usize, length: usize, vec: *mut u8) -> AxResult<isize> 
         return Ok(0);
     }
 
-    // Calculate number of pages to check
-    let page_count = length.div_ceil(PAGE_SIZE_4K);
-
-    // Get current address space
-    let curr = current();
-    let aspace = curr.as_thread().proc_data.aspace.lock();
-
-    let mut result = vec![0u8; page_count];
-    let mut i = 0;
-
-    while i < page_count {
-        let addr = start_addr + i * PAGE_SIZE_4K;
-
-        // ENOMEM: Check if this page is within a valid VMA
-        let area = aspace.find_area(addr).ok_or(AxError::NoMemory)?;
-
-        // Verify we have at least USER access permission
-        if !area.flags().contains(MappingFlags::USER) {
-            return Err(AxError::NoMemory);
-        }
-
-        // Query page table with batch awareness
-        let (is_resident, size) = match aspace.page_table().query(addr) {
-            Ok((_, _, size)) => {
-                // Physical page exists and is resident
-                // page_size tells us how many contiguous pages have the same status
-                (true, size as _)
-            }
-            Err(_) => {
-                // Page is mapped but not populated (lazy allocation)
-                // We need to determine how many contiguous pages are also not populated
-                // For safety, we check the next page or use PAGE_SIZE_4K as minimum step
-                (false, PAGE_SIZE_4K)
-            }
-        };
-        let n = size / PAGE_SIZE_4K;
-
-        if is_resident {
-            let end = (i + n).min(page_count);
-            result[i..end].fill(1);
-        }
-
-        i += n;
+    if vec.is_null() {
+        return Err(AxError::BadAddress);
     }
 
-    // EFAULT: Write result to user space
-    // vm_write_slice will return EFAULT if vec is invalid
-    vm_write_slice(vec, result.as_slice())?;
+    let curr = current();
+    let proc_data = &curr.as_thread().proc_data;
+    let page_count = {
+        let aspace = proc_data.aspace.lock();
+        checked_page_count(
+            addr,
+            length,
+            PAGE_SIZE_4K,
+            aspace.base().as_usize(),
+            aspace.end().as_usize(),
+        )
+        .ok_or(AxError::NoMemory)?
+    };
+
+    // Bound kernel memory use, and never hold the address-space lock across a
+    // user copy: the copy itself can fault and need the same lock.
+    let mut result = [0u8; 256];
+    let mut done = 0usize;
+    while done < page_count {
+        let count = (page_count - done).min(result.len());
+        {
+            let aspace = proc_data.aspace.lock();
+            for (index, slot) in result[..count].iter_mut().enumerate() {
+                let page = VirtAddr::from(addr + (done + index) * PAGE_SIZE_4K);
+                let area = aspace.find_area(page).ok_or(AxError::NoMemory)?;
+                if !area.flags().contains(MappingFlags::USER) {
+                    return Err(AxError::NoMemory);
+                }
+                *slot = u8::from(aspace.page_table().query(page).is_ok());
+            }
+        }
+        vm_write_slice(vec.wrapping_add(done), &result[..count])?;
+        done += count;
+    }
 
     Ok(0)
 }
