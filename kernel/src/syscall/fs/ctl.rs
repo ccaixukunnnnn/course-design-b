@@ -531,20 +531,29 @@ pub fn sys_renameat2(
     let (new_dir, new_name) =
         with_fs(new_dirfd, |fs| fs.resolve_nonexistent(Path::new(&new_path)))?;
 
-    let source = old_dir.lookup_no_follow(&old_name).ok();
-    let previous = new_dir.lookup_no_follow(new_name).ok();
-    old_dir.rename(&old_name, &new_dir, new_name)?;
-    if let Some(source) = source {
-        if let Some(previous) = previous {
-            if inotify::same_object(&source, &previous) {
-                return Ok(0);
-            }
-            if previous.is_dir() {
-                inotify::invalidate_directory(&previous);
-            }
-        }
-        inotify::moved((&old_dir, &old_name), (&new_dir, new_name), &source);
+    if flags & !(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT) != 0
+        || flags & RENAME_EXCHANGE != 0 && flags & (RENAME_NOREPLACE | RENAME_WHITEOUT) != 0
+    {
+        return Err(AxError::InvalidInput);
     }
+    if flags & (RENAME_EXCHANGE | RENAME_WHITEOUT) != 0 {
+        return Err(AxError::Unsupported);
+    }
+    let source = old_dir.lookup_no_follow(&old_name)?;
+    let previous = new_dir.lookup_no_follow(new_name).ok();
+    if flags & RENAME_NOREPLACE != 0 && previous.is_some() {
+        return Err(AxError::AlreadyExists);
+    }
+    old_dir.rename(&old_name, &new_dir, new_name)?;
+    if let Some(previous) = previous {
+        if inotify::same_object(&source, &previous) {
+            return Ok(0);
+        }
+        if previous.is_dir() {
+            inotify::invalidate_directory(&previous);
+        }
+    }
+    inotify::moved((&old_dir, &old_name), (&new_dir, new_name), &source);
     Ok(0)
 }
 

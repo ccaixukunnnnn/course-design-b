@@ -34,7 +34,9 @@ cat /root/folder-live/outbox/answer.job
 
 投递后等待 `COMMIT answer.job` 再执行 `cat`。按 `Ctrl+A`，松开后按 `X` 退出该 QEMU。演示用独立的根文件系统副本。
 
-演示使用根文件系统上的 `/root`。当前 StarryOS 的 `/tmp` 使用内存文件系统，重命名后可能丢失文件缓存中的内容。
+手动示例使用根文件系统上的 `/root`。自动验收默认使用 `/tmp`，逐份核对 tmpfs 重命名后的文件内容。
+
+项目在 `kernel/vendor/axfs-ng-vfs` 保留了 axfs-ng-vfs 0.1.1 的源码及原许可信息。课程补丁让 tmpfs 按 inode 共享页缓存，并在重命名时按源条目检查目标目录。其他文件系统沿用原有的缓存归属。源码基线对应 [上游提交 0c1be8b](https://github.com/Starry-OS/axfs-ng-vfs/tree/0c1be8be0e4b43f2a8374e180517b2647065fd30)。
 
 ## 实现范围
 

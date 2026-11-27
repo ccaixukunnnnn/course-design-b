@@ -9,6 +9,7 @@
 #include <sys/epoll.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 static void need(bool ok, const char *what) {
@@ -40,11 +41,38 @@ static uint32_t expect(struct batch *batch, int wd, uint32_t mask, const char *n
     return event->cookie;
 }
 
+static void check_rename_data(void) {
+    int old = open("data", O_CREAT | O_EXCL | O_RDWR, 0600);
+    need(old >= 0 && write(old, "abcd", 4) == 4, "write original bytes");
+    need(mkdir("tree", 0700) == 0 && rename("data", "tree/data") == 0,
+         "move file into child directory");
+    need(link("tree/data", "alias") == 0, "make hard link");
+    int alias = open("alias", O_RDWR);
+    char bytes[4];
+    need(alias >= 0 && read(alias, bytes, 4) == 4 && !memcmp(bytes, "abcd", 4),
+         "hard link reads renamed file contents");
+    need(pwrite(alias, "xy", 2, 1) == 2 && pread(old, bytes, 4, 0) == 4 &&
+         !memcmp(bytes, "axyd", 4), "old descriptor sees writes through hard link");
+    need(syscall(SYS_renameat2, AT_FDCWD, "alias", AT_FDCWD, "tree/data", 1) == -1 &&
+         errno == EEXIST, "no-replace preserves existing name");
+    need(rename("tree", "renamed") == 0 && rename("renamed", "renamed") == 0,
+         "rename populated directory");
+    close(alias);
+    close(old);
+    int moved = open("renamed/data", O_RDONLY);
+    need(moved >= 0 && read(moved, bytes, 4) == 4 && !memcmp(bytes, "axyd", 4),
+         "moved directory retains child and its bytes");
+    close(moved);
+    need(unlink("alias") == 0 && unlink("renamed/data") == 0 && rmdir("renamed") == 0,
+         "clean renamed entries");
+}
+
 int main(void) {
     alarm(12);
     char root[] = "/tmp/inotify-test-XXXXXX";
     need(mkdtemp(root) != NULL, "make temporary directory");
     need(chdir(root) == 0 && mkdir("from", 0700) == 0 && mkdir("to", 0700) == 0, "prepare directories");
+    check_rename_data();
     int fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
     int ep = epoll_create1(EPOLL_CLOEXEC);
     need(fd >= 0 && ep >= 0, "create inotify and epoll");

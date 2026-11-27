@@ -369,10 +369,7 @@ static void force_overflow(struct folders dirs) {
 
 static void verify(void) {
     alarm(60);
-    // StarryOS's current tmpfs loses cached file contents across rename.
-    // Use the guest's disk-backed home directory by default.
     const char *base = getenv("TMPDIR");
-    if (!base || !*base) base = getenv("HOME");
     if (!base || !*base) base = "/tmp";
     char root[PATH_MAX];
     int len = snprintf(root, sizeof root, "%s/folder-watch-XXXXXX", base);
